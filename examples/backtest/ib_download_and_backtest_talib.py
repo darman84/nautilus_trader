@@ -34,8 +34,8 @@ from nautilus_trader.config import DataEngineConfig
 from nautilus_trader.config import LoggingConfig
 from nautilus_trader.config import LoggingConfig
 from nautilus_trader.config import RiskEngineConfig
-from nautilus_trader.examples.strategies.ema_cross import EMACross
-from nautilus_trader.examples.strategies.ema_cross import EMACrossConfig
+from nautilus_trader.examples.strategies.talib_strategy import TALibStrategy
+from nautilus_trader.examples.strategies.talib_strategy import TALibStrategyConfig
 from nautilus_trader.model.currencies import USD
 from nautilus_trader.model.enums import AccountType
 from nautilus_trader.model.enums import OmsType
@@ -118,7 +118,7 @@ def run_backtest() -> None:
     engine.add_data(bars)
 
     # Configure your strategy
-    config = EMACrossConfig(
+    config = TALibStrategyConfig(
         instrument_id=InstrumentId.from_str("AAPL.NASDAQ"),
         bar_type=BarType.from_str("AAPL.NASDAQ-1-HOUR-LAST-EXTERNAL"),
         trade_size=Decimal(100),
@@ -127,7 +127,7 @@ def run_backtest() -> None:
     )
 
     # Instantiate and add your strategy
-    strategy = EMACross(config=config)
+    strategy = TALibStrategy(config=config)
     engine.add_strategy(strategy=strategy)
 
     time.sleep(0.1)
