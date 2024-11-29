@@ -29,8 +29,8 @@ from nautilus_trader.backtest.engine import BacktestEngine
 from nautilus_trader.backtest.engine import BacktestEngineConfig
 from nautilus_trader.backtest.models import FillModel
 from nautilus_trader.backtest.models import LatencyModel
-from nautilus_trader.config import BacktestDataConfig
-from nautilus_trader.config import BacktestRunConfig
+from nautilus_trader.config import DataEngineConfig
+from nautilus_trader.config import LoggingConfig
 from nautilus_trader.config import LoggingConfig
 from nautilus_trader.config import RiskEngineConfig
 from nautilus_trader.examples.strategies.ema_cross import EMACross
