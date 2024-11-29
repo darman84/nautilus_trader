@@ -54,7 +54,7 @@ async def download_data(host: str | None = None, port: int | None = None) -> Non
         exchange="SMART",
         primaryExchange="NASDAQ",
     )
-    instrument_id = InstrumentId.from_str("AAPL.NASDAQ")
+    instrument_id_str = "AAPL.NASDAQ"
 
     # Connect to IB
     client = HistoricInteractiveBrokersClient(host=host, port=port, client_id=5)
@@ -64,7 +64,7 @@ async def download_data(host: str | None = None, port: int | None = None) -> Non
     # Request data
     instruments = await client.request_instruments(
         contracts=[contract],
-        instrument_ids=[instrument_id],
+        instrument_ids=[instrument_id_str],
     )
 
     bars = await client.request_bars(
