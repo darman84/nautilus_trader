@@ -92,21 +92,12 @@ def run_backtest() -> None:
     config = BacktestEngineConfig(
         trader_id=TraderId("BACKTESTER-001"),
         logging=LoggingConfig(log_level="INFO"),
-        risk_engine=RiskEngineConfig(bypass=True),  # No risk checks for backtest
-        data_engine=DataEngineConfig(
-            validate_data_sequence=True,  # Will make sure DataEngine discards any Bars received out of sequence
-        ),
     )
 
-    # Initialize engine
+    # Build the backtest engine
     engine = BacktestEngine(config=config)
 
-    # Load data from catalog
-    catalog = ParquetDataCatalog("./catalog")
-    instruments = catalog.instruments()
-    bars = catalog.bars()
-
-    # Add venue first
+    # Add a trading venue (multiple venues possible)
     engine.add_venue(
         venue=NASDAQ,
         oms_type=OmsType.NETTING,
@@ -115,38 +106,53 @@ def run_backtest() -> None:
         starting_balances=[Money(1_000_000, USD)],
     )
 
-    # Add data to engine
+    # Load data from catalog
+    catalog = ParquetDataCatalog("./catalog")
+    instruments = catalog.instruments()
+    bars = catalog.bars()
+
+    # Add instruments and data
     for instrument in instruments:
         engine.add_instrument(instrument)
     engine.add_data(bars)
 
-    # Configure strategy
-    strategy_config = EMACrossConfig(
-        InstrumentId.from_str("AAPL.NASDAQ"),
+    # Configure your strategy
+    config = EMACrossConfig(
+        instrument_id=InstrumentId.from_str("AAPL.NASDAQ"),
         bar_type=BarType.from_str("AAPL.NASDAQ-1-HOUR-LAST-EXTERNAL"),
-        trade_size=100,
+        trade_size=Decimal(100),
         fast_ema_period=10,
         slow_ema_period=20,
     )
 
-    # Add strategy to engine
-    engine.add_strategy(EMACross(config=strategy_config))
+    # Instantiate and add your strategy
+    strategy = EMACross(config=config)
+    engine.add_strategy(strategy=strategy)
 
-    # Run backtest
+    time.sleep(0.1)
+    input("Press Enter to continue...")
+
+    # Run the engine (from start to end of data)
     engine.run()
 
-    # Print performance metrics
-    portfolio = engine.portfolio
-    metrics = engine.generate_metrics()
+    # View reports
+    with pd.option_context(
+        "display.max_rows",
+        100,
+        "display.max_columns",
+        None,
+        "display.width",
+        300,
+    ):
+        print(engine.trader.generate_account_report(NASDAQ))
+        print(engine.trader.generate_order_fills_report())
+        print(engine.trader.generate_positions_report())
 
-    print("\nBacktest Results:")
-    print("-" * 50)
-    print(f"Initial Capital: ${portfolio.starting_capital:,.2f}")
-    print(f"Final Capital: ${portfolio.capital:,.2f}")
-    print(f"Net PnL: ${portfolio.net_pnl:,.2f}")
-    print(f"Return: {portfolio.return_pct:.2f}%")
-    print(f"Max Drawdown: {metrics.drawdown_pct_max:.2f}%")
-    print(f"Sharpe Ratio: {metrics.sharpe_ratio:.2f}")
+    # For repeated backtest runs make sure to reset the engine
+    engine.reset()
+
+    # Good practice to dispose of the object
+    engine.dispose()
 
 
 if __name__ == "__main__":
