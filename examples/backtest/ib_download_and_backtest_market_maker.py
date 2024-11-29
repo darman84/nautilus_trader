@@ -34,8 +34,8 @@ from nautilus_trader.config import DataEngineConfig
 from nautilus_trader.config import LoggingConfig
 from nautilus_trader.config import LoggingConfig
 from nautilus_trader.config import RiskEngineConfig
-from nautilus_trader.examples.strategies.ema_cross import EMACross
-from nautilus_trader.examples.strategies.ema_cross import EMACrossConfig
+from nautilus_trader.examples.strategies.volatility_market_maker import VolatilityMarketMaker
+from nautilus_trader.examples.strategies.volatility_market_maker import VolatilityMarketMakerConfig
 from nautilus_trader.model.currencies import USD
 from nautilus_trader.model.enums import AccountType
 from nautilus_trader.model.enums import OmsType
@@ -118,16 +118,18 @@ def run_backtest() -> None:
     engine.add_data(bars)
 
     # Configure your strategy
-    config = EMACrossConfig(
+    bar_type = BarType.from_str("AAPL.NASDAQ-1-HOUR-LAST-EXTERNAL")
+    config = VolatilityMarketMakerConfig(
         instrument_id=InstrumentId.from_str("AAPL.NASDAQ"),
-        bar_type=BarType.from_str("AAPL.NASDAQ-1-HOUR-LAST-EXTERNAL"),
+        bar_type=bar_type,
         trade_size=Decimal(100),
-        fast_ema_period=10,
-        slow_ema_period=20,
+        atr_period=20,
+        atr_multiple=2.0,
+        order_id_tag="001",
     )
 
     # Instantiate and add your strategy
-    strategy = EMACross(config=config)
+    strategy = VolatilityMarketMaker(config=config)
     engine.add_strategy(strategy=strategy)
 
     time.sleep(0.1)
