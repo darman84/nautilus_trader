@@ -24,3 +24,5 @@ A generic `FiniteStateMachine` operates with C-level enums, ensuring correct
 state transitions for both domain entities and more complex components.
 
 """
+
+from nautilus_trader.common import Environment
