@@ -88,10 +88,7 @@ def run_backtest() -> None:
         logging=LoggingConfig(log_level="INFO"),
         risk_engine=RiskEngineConfig(bypass=True),  # No risk checks for backtest
         data_engine=DataEngineConfig(
-            catalog_path="./catalog",
-            data_cls="bars",
-            start_time="2023-11-06 09:30:00",
-            end_time="2023-11-06 16:30:00",
+            validate_data_sequence=True,  # Will make sure DataEngine discards any Bars received out of sequence
         ),
     )
 
