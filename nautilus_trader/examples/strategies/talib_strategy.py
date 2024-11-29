@@ -22,6 +22,8 @@ from nautilus_trader.model.data import Bar
 from nautilus_trader.model.data import BarType
 from nautilus_trader.model.instruments import Instrument
 from nautilus_trader.trading.strategy import Strategy
+from nautilus_trader.model.enums import OrderSide
+from nautilus_trader.model.orders import MarketOrder
 
 
 # *** THIS IS A TEST STRATEGY WITH NO ALPHA ADVANTAGE WHATSOEVER. ***
@@ -148,29 +150,45 @@ class TALibStrategy(Strategy):
             # Implies no market information for this bar
             return
 
-        # Check EMA cross-over
-        if self.indicator_manager.value("EMA_10") > self.indicator_manager.value(
-            "EMA_20",
-            1,
-        ) and self.indicator_manager.value("EMA_10", 1) < self.indicator_manager.value("EMA_20"):
-            self.log.info("EMA_10 crossed above EMA_20", color=LogColor.GREEN)
-        elif self.indicator_manager.value("EMA_10") < self.indicator_manager.value(
-            "EMA_20",
-            1,
-        ) and self.indicator_manager.value("EMA_10", 1) > self.indicator_manager.value("EMA_20"):
-            self.log.info("EMA_10 crossed below EMA_20", color=LogColor.GREEN)
+        # Buy Signal: EMA_10 crosses above EMA_20 and RSI is below 30
+        if (
+            self.indicator_manager.value("EMA_10") > self.indicator_manager.value("EMA_20")
+            and self.indicator_manager.value("EMA_10", 1) <= self.indicator_manager.value("EMA_20", 1)
+            and self.indicator_manager.value("RSI_14") < 30
+        ):
+            self.log.info("Buy Signal: EMA_10 crossed above EMA_20 and RSI is oversold", color=LogColor.GREEN)
+            self.buy()
 
-        # Check RSI
-        if self.indicator_manager.value("RSI_14") > 70:
-            self.log.info("RSI_14 is overbought", color=LogColor.MAGENTA)
-        elif self.indicator_manager.value("RSI_14") < 30:
-            self.log.info("RSI_14 is oversold", color=LogColor.MAGENTA)
+        # Sell Signal: EMA_10 crosses below EMA_20 and RSI is above 70
+        elif (
+            self.indicator_manager.value("EMA_10") < self.indicator_manager.value("EMA_20")
+            and self.indicator_manager.value("EMA_10", 1) >= self.indicator_manager.value("EMA_20", 1)
+            and self.indicator_manager.value("RSI_14") > 70
+        ):
+            self.log.info("Sell Signal: EMA_10 crossed below EMA_20 and RSI is overbought", color=LogColor.RED)
+            self.sell()
 
-        # Check MACD Histogram
-        if self.indicator_manager.value("MACD_12_26_9_HIST") > 0:
-            self.log.info("MACD_12_26_9_HIST is positive", color=LogColor.MAGENTA)
-        elif self.indicator_manager.value("MACD_12_26_9_HIST") < 0:
-            self.log.info("MACD_12_26_9_HIST is negative", color=LogColor.MAGENTA)
+    def buy(self) -> None:
+        """
+        Execute a buy order.
+        """
+        order: MarketOrder = self.order_factory.market(
+            instrument_id=self.instrument_id,
+            order_side=OrderSide.BUY,
+            quantity=self.instrument.make_qty(1),  # Example quantity
+        )
+        self.submit_order(order)
+
+    def sell(self) -> None:
+        """
+        Execute a sell order.
+        """
+        order: MarketOrder = self.order_factory.market(
+            instrument_id=self.instrument_id,
+            order_side=OrderSide.SELL,
+            quantity=self.instrument.make_qty(1),  # Example quantity
+        )
+        self.submit_order(order)
 
     def on_stop(self) -> None:
         """
