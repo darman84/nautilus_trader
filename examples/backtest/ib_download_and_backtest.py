@@ -137,7 +137,7 @@ def run_backtest() -> None:
 
     # Print performance metrics
     portfolio = engine.portfolio
-    performance = engine.portfolio.performance
+    metrics = engine.generate_metrics()
 
     print("\nBacktest Results:")
     print("-" * 50)
@@ -145,8 +145,8 @@ def run_backtest() -> None:
     print(f"Final Capital: ${portfolio.capital:,.2f}")
     print(f"Net PnL: ${portfolio.net_pnl:,.2f}")
     print(f"Return: {portfolio.return_pct:.2f}%")
-    print(f"Max Drawdown: {performance.drawdown_pct_max:.2f}%")
-    print(f"Sharpe Ratio: {performance.sharpe_ratio:.2f}")
+    print(f"Max Drawdown: {metrics.drawdown_pct_max:.2f}%")
+    print(f"Sharpe Ratio: {metrics.sharpe_ratio:.2f}")
 
 
 if __name__ == "__main__":
