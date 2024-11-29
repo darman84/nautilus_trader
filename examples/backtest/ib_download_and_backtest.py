@@ -54,7 +54,7 @@ async def download_data(host: str | None = None, port: int | None = None) -> Non
         exchange="SMART",
         primaryExchange="NASDAQ",
     )
-    instrument_id = "AAPL.NASDAQ"  # Pass as string, conversion happens internally
+    instrument_id = InstrumentId.from_str("AAPL.NASDAQ")
 
     # Connect to IB
     client = HistoricInteractiveBrokersClient(host=host, port=port, client_id=5)
@@ -121,7 +121,7 @@ def run_backtest() -> None:
 
     # Configure strategy
     strategy_config = EMACrossConfig(
-        instrument_id="AAPL.NASDAQ",
+        instrument_id=InstrumentId.from_str("AAPL.NASDAQ"),
         bar_type="1-HOUR-LAST",
         trade_size=100,
         fast_ema_period=10,
