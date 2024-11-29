@@ -87,16 +87,10 @@ def run_backtest() -> None:
         trader_id=TraderId("BACKTESTER-001"),
         logging=LoggingConfig(log_level="INFO"),
         run_config=BacktestRunConfig(
-            start_time=pd.Timestamp("2023-11-06 09:30:00", tz="America/New_York"),
-            end_time=pd.Timestamp("2023-11-06 16:30:00", tz="America/New_York"),
-            initial_account_balance=Decimal("1000000.00"),
-            account_type=AccountType.MARGIN,
-            bypass_logging=False,
-            level_logged="INFO",
-            latency_model=LatencyModel(),
-            fill_model=FillModel(),
-            random_seed=42,
-            run_number=1,
+            venues=[],  # Will be populated by engine.add_venue()
+            data=[],    # Will be populated by engine.add_data()
+            start="2023-11-06 09:30:00",  
+            end="2023-11-06 16:30:00",
         ),
         risk_engine=RiskEngineConfig(
             bypass=True,  # No risk checks for backtest
