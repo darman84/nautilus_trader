@@ -101,7 +101,8 @@ def run_backtest() -> None:
     bars = catalog.bars()
 
     # Add data to engine
-    engine.add_instruments(instruments)
+    for instrument in instruments:
+        engine.add_instrument(instrument)
     engine.add_data(bars)
 
     # Configure strategy
