@@ -107,8 +107,8 @@ if __name__ == "__main__":
         password=os.environ["TWS_PASSWORD"],
         trading_mode="paper",
     )
-    asyncio.run(main(dockerized_gateway=gateway_config))
+    #asyncio.run(main(dockerized_gateway=gateway_config))
 
     # To connect to an existing TWS or Gateway instance without the use of automated dockerized gateway,
     # follow this format:
-    # asyncio.run(main(host="127.0.0.1", port=7497))
+    asyncio.run(main(host="127.0.0.1", port=7497))

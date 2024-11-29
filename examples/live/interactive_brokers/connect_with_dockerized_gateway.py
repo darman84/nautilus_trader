@@ -108,7 +108,7 @@ config_node = TradingNodeConfig(
     exec_clients={
         "IB": InteractiveBrokersExecClientConfig(
             ibg_client_id=1,
-            account_id="DU123456",  # This must match with the IB Gateway/TWS node is connecting to
+            account_id="DU7453754",  # This must match with the IB Gateway/TWS node is connecting to
             dockerized_gateway=dockerized_gateway,
             instrument_provider=instrument_provider,
             routing=RoutingConfig(
