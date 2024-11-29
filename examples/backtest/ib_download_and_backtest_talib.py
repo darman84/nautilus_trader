@@ -71,7 +71,7 @@ async def download_data(host: str | None = None, port: int | None = None) -> Non
 
     bars = await client.request_bars(
         bar_specifications=["1-HOUR-LAST"],
-        start_date_time=datetime.datetime(2023, 1, 1, 9, 30),
+        start_date_time=datetime.datetime(2023, 11, 1, 9, 30),
         end_date_time=datetime.datetime(2023, 11, 6, 16, 30),
         tz_name="America/New_York",
         contracts=[contract],
