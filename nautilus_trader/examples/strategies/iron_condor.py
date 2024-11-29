@@ -1,6 +1,8 @@
 from decimal import Decimal
 from typing import Optional
 
+from nautilus_trader.adapters.interactive_brokers.common import IBContract
+from nautilus_trader.adapters.interactive_brokers.config import InteractiveBrokersInstrumentProviderConfig
 from nautilus_trader.adapters.interactive_brokers.providers import InteractiveBrokersInstrumentProvider
 from nautilus_trader.config import StrategyConfig
 from nautilus_trader.core.data import Data
@@ -60,10 +62,22 @@ class IronCondor(Strategy):
         # Subscribe to bar data
         self.subscribe_bars(self.bar_type)
         
-        # Subscribe to IBKR option chain
+        # Configure and subscribe to IBKR option chain
+        config = InteractiveBrokersInstrumentProviderConfig(
+            build_options_chain=True,
+            load_contracts=[
+                IBContract(
+                    secType="OPT",
+                    symbol=self.instrument_id.symbol.value,
+                    exchange="SMART",
+                    build_options_chain=True,
+                ),
+            ],
+        )
         self.ib_provider = InteractiveBrokersInstrumentProvider(
             client=self.client,
             logger=self.logger,
+            config=config,
         )
         self.option_chain = self.ib_provider.option_chain(self.instrument_id)
 
@@ -132,12 +146,17 @@ class IronCondor(Strategy):
 
     def check_exit_signals(self, bar: Bar) -> None:
         """Check for exit conditions."""
-        # Implement exit logic based on:
-        # - Profit target reached
-        # - Stop loss hit
-        # - Time decay target reached
-        # - Technical indicators
-        pass
+        if not self.portfolio.is_flat(self.instrument_id):
+            position = self.portfolio.get_position(self.instrument_id)
+            
+            # Calculate total P&L
+            unrealized_pnl = position.unrealized_pnl
+            
+            # Exit at 50% max profit or 200% max loss
+            if unrealized_pnl >= self.max_profit * Decimal("0.5"):
+                self.close_all_positions()
+            elif unrealized_pnl <= -self.max_profit * Decimal("2.0"):
+                self.close_all_positions()
 
     def on_stop(self) -> None:
         """Clean up on strategy stop."""
