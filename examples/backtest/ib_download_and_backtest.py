@@ -37,7 +37,10 @@ from nautilus_trader.examples.strategies.ema_cross import EMACross
 from nautilus_trader.examples.strategies.ema_cross import EMACrossConfig
 from nautilus_trader.model.currencies import USD
 from nautilus_trader.model.enums import AccountType
+from nautilus_trader.model.enums import OmsType
 from nautilus_trader.model.identifiers import AccountId
+from nautilus_trader.model.identifiers import Venue
+from nautilus_trader.model.objects import Money
 from nautilus_trader.model.identifiers import StrategyId
 from nautilus_trader.model.identifiers import TraderId
 from nautilus_trader.persistence.catalog import ParquetDataCatalog
@@ -80,6 +83,9 @@ async def download_data(host: str | None = None, port: int | None = None) -> Non
     catalog.write_data(bars)
 
 
+# Define venue
+NASDAQ = Venue("NASDAQ")
+
 def run_backtest() -> None:
     """Run backtest using downloaded data."""
     # Configure backtest engine
@@ -99,6 +105,15 @@ def run_backtest() -> None:
     catalog = ParquetDataCatalog("./catalog")
     instruments = catalog.instruments()
     bars = catalog.bars()
+
+    # Add venue first
+    engine.add_venue(
+        venue=NASDAQ,
+        oms_type=OmsType.NETTING,
+        account_type=AccountType.CASH,
+        base_currency=USD,
+        starting_balances=[Money(1_000_000, USD)],
+    )
 
     # Add data to engine
     for instrument in instruments:
