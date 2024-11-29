@@ -40,6 +40,7 @@ from nautilus_trader.model.enums import AccountType
 from nautilus_trader.model.enums import OmsType
 from nautilus_trader.model.identifiers import InstrumentId, Venue
 from nautilus_trader.model.objects import Money
+from nautilus_trader.model.data import BarType
 from nautilus_trader.model.identifiers import InstrumentId, StrategyId
 from nautilus_trader.model.identifiers import TraderId
 from nautilus_trader.persistence.catalog import ParquetDataCatalog
@@ -122,7 +123,7 @@ def run_backtest() -> None:
     # Configure strategy
     strategy_config = EMACrossConfig(
         InstrumentId.from_str("AAPL.NASDAQ"),
-        bar_type="1-HOUR-LAST",
+        bar_type=BarType.from_str("AAPL.NASDAQ-1-HOUR-LAST-EXTERNAL"),
         trade_size=100,
         fast_ema_period=10,
         slow_ema_period=20,
