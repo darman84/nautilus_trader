@@ -73,7 +73,7 @@ async def download_data(host: str | None = None, port: int | None = None) -> Non
         end_date_time=datetime.datetime(2023, 11, 6, 16, 30),
         tz_name="America/New_York",
         contracts=[contract],
-        instrument_ids=[instrument_id],
+        instrument_ids=[instrument_id_str],
     )
 
     # Save data to catalog
