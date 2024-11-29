@@ -1,12 +1,14 @@
 from decimal import Decimal
 from typing import Optional
 
+from nautilus_trader.adapters.interactive_brokers.providers import InteractiveBrokersInstrumentProvider
 from nautilus_trader.config import StrategyConfig
 from nautilus_trader.core.data import Data
 from nautilus_trader.model.data.bar import Bar
 from nautilus_trader.model.enums import OrderSide
 from nautilus_trader.model.identifiers import InstrumentId
 from nautilus_trader.model.instruments import Instrument
+from nautilus_trader.model.objects import Price
 from nautilus_trader.model.orders import MarketOrder
 from nautilus_trader.trading.strategy import Strategy
 
@@ -58,9 +60,12 @@ class IronCondor(Strategy):
         # Subscribe to bar data
         self.subscribe_bars(self.bar_type)
         
-        # Subscribe to option chain updates
-        # Note: Implementation depends on specific venue adapter
-        self.subscribe_option_chain(self.instrument_id)
+        # Subscribe to IBKR option chain
+        self.ib_provider = InteractiveBrokersInstrumentProvider(
+            client=self.client,
+            logger=self.logger,
+        )
+        self.option_chain = self.ib_provider.option_chain(self.instrument_id)
 
     def on_bar(self, bar: Bar) -> None:
         """
@@ -147,15 +152,33 @@ class IronCondor(Strategy):
     # Helper methods
     def calculate_strike(self, price: Decimal) -> Decimal:
         """Calculate nearest valid strike price."""
-        # Implementation depends on exchange strike price intervals
-        return price
+        # Round to nearest IBKR strike interval
+        strike_interval = Decimal("0.5")  # Standard IBKR strike intervals
+        return round(price / strike_interval) * strike_interval
 
     def get_call_option_id(self, strike: Decimal) -> InstrumentId:
         """Get instrument ID for call option at given strike."""
-        # Implementation depends on venue's option symbol format
-        return InstrumentId.from_str(f"{self.instrument_id}_C_{strike}")
+        # IBKR option symbol format
+        symbol = self.instrument_id.symbol.value
+        expiry = self._get_next_monthly_expiry()
+        return InstrumentId.from_str(f"{symbol}_{expiry}_C_{strike}_SMART")
 
     def get_put_option_id(self, strike: Decimal) -> InstrumentId:
         """Get instrument ID for put option at given strike."""
-        # Implementation depends on venue's option symbol format
-        return InstrumentId.from_str(f"{self.instrument_id}_P_{strike}")
+        # IBKR option symbol format
+        symbol = self.instrument_id.symbol.value
+        expiry = self._get_next_monthly_expiry()
+        return InstrumentId.from_str(f"{symbol}_{expiry}_P_{strike}_SMART")
+
+    def _get_next_monthly_expiry(self) -> str:
+        """Get the next monthly expiration date."""
+        # Get the next monthly expiry from the option chain
+        if not self.option_chain:
+            return ""
+        
+        # Sort expiries and get next monthly
+        expiries = sorted(self.option_chain.expiries)
+        for expiry in expiries:
+            if expiry > self.clock.utc_now():
+                return expiry.strftime("%Y%m%d")
+        return ""
