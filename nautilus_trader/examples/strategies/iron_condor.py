@@ -41,6 +41,14 @@ class IronCondor(Strategy):
     """
 
     def __init__(self, config: IronCondorConfig) -> None:
+        """
+        Initialize a new instance of the IronCondor class.
+
+        Parameters
+        ----------
+        config : IronCondorConfig
+            The configuration for the strategy.
+        """
         super().__init__(config)
 
         # Configuration
@@ -51,11 +59,21 @@ class IronCondor(Strategy):
         self.put_width = config.put_width
         self.otm_distance = config.otm_distance
 
+        # Initialize state
         self.instrument: Optional[Instrument] = None
         self.option_chain = None  # Will hold option chain data
+        self.is_position_opened = False
+        self.entry_price = Decimal("0")
+        self.max_profit = Decimal("0")
 
     def on_start(self) -> None:
-        """Initialize strategy and subscribe to data."""
+        """
+        Actions to be performed on strategy start.
+
+        - Initializes instruments
+        - Subscribes to market data
+        - Sets up option chain subscriptions
+        """
         # Get underlying instrument
         self.instrument = self.cache.instrument(self.instrument_id)
         
@@ -94,7 +112,16 @@ class IronCondor(Strategy):
             self.check_exit_signals(bar)
 
     def check_entry_signals(self, bar: Bar) -> None:
-        """Check for iron condor entry opportunities."""
+        """
+        Check for iron condor entry opportunities.
+
+        Parameters
+        ----------
+        bar : Bar
+            The update bar for analysis.
+        """
+        if self.is_position_opened:
+            return  # Already in a position
         # Get current price
         current_price = bar.close
         
@@ -145,18 +172,39 @@ class IronCondor(Strategy):
         self.submit_order(long_call)
 
     def check_exit_signals(self, bar: Bar) -> None:
-        """Check for exit conditions."""
+        """
+        Check for exit conditions.
+
+        Parameters
+        ----------
+        bar : Bar
+            The update bar for analysis.
+        """
+        if not self.is_position_opened:
+            return  # No position to exit
+
         if not self.portfolio.is_flat(self.instrument_id):
             position = self.portfolio.get_position(self.instrument_id)
             
             # Calculate total P&L
             unrealized_pnl = position.unrealized_pnl
             
-            # Exit at 50% max profit or 200% max loss
+            # Exit conditions
+            exit_position = False
+            
+            # Profit target (50% of max profit)
             if unrealized_pnl >= self.max_profit * Decimal("0.5"):
-                self.close_all_positions()
+                self.log.info(f"Profit target reached: {unrealized_pnl}")
+                exit_position = True
+                
+            # Stop loss (200% of max profit)
             elif unrealized_pnl <= -self.max_profit * Decimal("2.0"):
+                self.log.warning(f"Stop loss hit: {unrealized_pnl}")
+                exit_position = True
+                
+            if exit_position:
                 self.close_all_positions()
+                self.is_position_opened = False
 
     def on_stop(self) -> None:
         """Clean up on strategy stop."""
@@ -165,8 +213,13 @@ class IronCondor(Strategy):
         self.unsubscribe_bars(self.bar_type)
 
     def on_reset(self) -> None:
-        """Reset strategy state."""
+        """
+        Reset the strategy state.
+        """
         self.option_chain = None
+        self.is_position_opened = False
+        self.entry_price = Decimal("0")
+        self.max_profit = Decimal("0")
 
     # Helper methods
     def calculate_strike(self, price: Decimal) -> Decimal:
