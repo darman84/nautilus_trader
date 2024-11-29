@@ -1,3 +1,13 @@
+from decimal import Decimal
+
+from nautilus_trader.adapters.interactive_brokers.config import DockerizedIBGatewayConfig
+from nautilus_trader.adapters.interactive_brokers.config import InteractiveBrokersDataClientConfig
+from nautilus_trader.adapters.interactive_brokers.config import InteractiveBrokersExecClientConfig
+from nautilus_trader.adapters.interactive_brokers.factories import InteractiveBrokersLiveDataClientFactory
+from nautilus_trader.adapters.interactive_brokers.factories import InteractiveBrokersLiveExecClientFactory
+from nautilus_trader.config import LiveDataEngineConfig
+from nautilus_trader.config import LoggingConfig
+from nautilus_trader.config import TradingNodeConfig
 from nautilus_trader.core.message import Event
 from nautilus_trader.indicators.macd import MovingAverageConvergenceDivergence
 from nautilus_trader.model.enums import OrderSide
@@ -5,16 +15,19 @@ from nautilus_trader.model.enums import PositionSide
 from nautilus_trader.model.enums import PriceType
 from nautilus_trader.model.events import PositionOpened
 from nautilus_trader.model.identifiers import InstrumentId
+from nautilus_trader.model.objects import Quantity
 from nautilus_trader.model.position import Position
+from nautilus_trader.model.tick import QuoteTick
 from nautilus_trader.trading.strategy import Strategy
 from nautilus_trader.trading.strategy import StrategyConfig
+from nautilus_trader.live.node import TradingNode
 
 
 class MACDConfig(StrategyConfig):
-    instrument_id: InstrumentId
+    instrument_id: str = "SPY.IB"  # SPY ETF on Interactive Brokers
     fast_period: int = 12
     slow_period: int = 26
-    trade_size: int = 1_000_000
+    trade_size: int = 100  # Number of shares
     entry_threshold: float = 0.00010
 
 
@@ -93,3 +106,59 @@ class MACDStrategy(Strategy):
 
     def on_dispose(self):
         pass  # Do nothing else
+
+
+if __name__ == "__main__":
+    # Configure IB Gateway (paper trading)
+    gateway_config = DockerizedIBGatewayConfig(
+        username="your_username",  # Your IB username
+        password="your_password",  # Your IB password
+        trading_mode="paper",      # Use paper trading
+    )
+
+    # Configure the data client
+    data_client_config = InteractiveBrokersDataClientConfig(
+        ibg_port=4002,
+        handle_revised_bars=False,
+        use_regular_trading_hours=True,
+        dockerized_gateway=gateway_config,
+    )
+
+    # Configure the execution client
+    exec_client_config = InteractiveBrokersExecClientConfig(
+        ibg_port=4002,
+        account_id="your_account_id",  # Your IB account ID
+        dockerized_gateway=gateway_config,
+    )
+
+    # Configure the trading node
+    config = TradingNodeConfig(
+        trader_id="MACD-001",
+        logging=LoggingConfig(log_level="INFO"),
+        data_clients={"IB": data_client_config},
+        exec_clients={"IB": exec_client_config},
+        data_engine=LiveDataEngineConfig(
+            validate_data_sequence=True,
+        ),
+    )
+
+    # Create and configure the strategy
+    strategy_config = MACDConfig()
+
+    # Initialize the trading node
+    node = TradingNode(config=config)
+
+    # Add the client factories
+    node.add_data_client_factory("IB", InteractiveBrokersLiveDataClientFactory)
+    node.add_exec_client_factory("IB", InteractiveBrokersLiveExecClientFactory)
+
+    # Add the strategy
+    node.add_strategy(MACDStrategy(config=strategy_config))
+
+    # Build and run
+    node.build()
+
+    try:
+        node.run()
+    finally:
+        node.dispose()
