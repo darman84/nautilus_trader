@@ -1,0 +1,175 @@
+#!/usr/bin/env python3
+# -------------------------------------------------------------------------------------------------
+#  Copyright (C) 2015-2024 Nautech Systems Pty Ltd. All rights reserved.
+#  https://nautechsystems.io
+#
+#  Licensed under the GNU Lesser General Public License Version 3.0 (the "License");
+#  You may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at https://www.gnu.org/licenses/lgpl-3.0.en.html
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+# -------------------------------------------------------------------------------------------------
+
+import asyncio
+import datetime
+from decimal import Decimal
+import os
+
+import pandas as pd
+
+from nautilus_trader.adapters.interactive_brokers.common import IBContract
+from nautilus_trader.adapters.interactive_brokers.config import DockerizedIBGatewayConfig
+from nautilus_trader.adapters.interactive_brokers.gateway import DockerizedIBGateway
+from nautilus_trader.adapters.interactive_brokers.historic import HistoricInteractiveBrokersClient
+from nautilus_trader.backtest.engine import BacktestEngine
+from nautilus_trader.backtest.engine import BacktestEngineConfig
+from nautilus_trader.backtest.models import FillModel
+from nautilus_trader.backtest.models import LatencyModel
+from nautilus_trader.config import BacktestDataConfig
+from nautilus_trader.config import BacktestRunConfig
+from nautilus_trader.config import ImportConfig
+from nautilus_trader.config import LoggingConfig
+from nautilus_trader.config import RiskEngineConfig
+from nautilus_trader.examples.strategies.ema_cross import EMACross
+from nautilus_trader.examples.strategies.ema_cross import EMACrossConfig
+from nautilus_trader.model.currencies import USD
+from nautilus_trader.model.enums import AccountType
+from nautilus_trader.model.identifiers import AccountId
+from nautilus_trader.model.identifiers import StrategyId
+from nautilus_trader.model.identifiers import TraderId
+from nautilus_trader.persistence.catalog import ParquetDataCatalog
+
+
+async def download_data(host: str | None = None, port: int | None = None) -> None:
+    """Download historical data from Interactive Brokers."""
+    # Define the contract we want data for
+    contract = IBContract(
+        secType="STK",
+        symbol="AAPL",
+        exchange="SMART",
+        primaryExchange="NASDAQ",
+    )
+    instrument_id = "AAPL.NASDAQ"
+
+    # Connect to IB
+    client = HistoricInteractiveBrokersClient(host=host, port=port, client_id=5)
+    await client.connect()
+    await asyncio.sleep(2)  # Give time for connection
+
+    # Request data
+    instruments = await client.request_instruments(
+        contracts=[contract],
+        instrument_ids=[instrument_id],
+    )
+
+    bars = await client.request_bars(
+        bar_specifications=["1-HOUR-LAST"],
+        start_date_time=datetime.datetime(2023, 11, 6, 9, 30),
+        end_date_time=datetime.datetime(2023, 11, 6, 16, 30),
+        tz_name="America/New_York",
+        contracts=[contract],
+        instrument_ids=[instrument_id],
+    )
+
+    # Save data to catalog
+    catalog = ParquetDataCatalog("./catalog")
+    catalog.write_data(instruments)
+    catalog.write_data(bars)
+
+
+def run_backtest() -> None:
+    """Run backtest using downloaded data."""
+    # Configure backtest engine
+    config = BacktestEngineConfig(
+        trader_id=TraderId("BACKTESTER-001"),
+        logging=LoggingConfig(log_level="INFO"),
+        run_config=BacktestRunConfig(
+            start_time=pd.Timestamp("2023-11-06 09:30:00", tz="America/New_York"),
+            end_time=pd.Timestamp("2023-11-06 16:30:00", tz="America/New_York"),
+            initial_account_balance=Decimal("1000000.00"),
+            account_type=AccountType.MARGIN,
+            bypass_logging=False,
+            level_logged="INFO",
+            latency_model=LatencyModel(),
+            fill_model=FillModel(),
+            random_seed=42,
+            run_number=1,
+        ),
+        risk_engine=RiskEngineConfig(
+            bypass=True,  # No risk checks for backtest
+        ),
+        import_config=ImportConfig(),
+        data_config=BacktestDataConfig(),
+    )
+
+    # Initialize engine
+    engine = BacktestEngine(config=config)
+
+    # Load data from catalog
+    catalog = ParquetDataCatalog("./catalog")
+    instruments = catalog.instruments()
+    bars = catalog.bars()
+
+    # Add data to engine
+    engine.add_instruments(instruments)
+    engine.add_data(bars)
+
+    # Configure strategy
+    strategy_config = EMACrossConfig(
+        instrument_id="AAPL.NASDAQ",
+        bar_type="1-HOUR-LAST",
+        trade_size=100,
+        fast_ema_period=10,
+        slow_ema_period=20,
+    )
+
+    # Add strategy to engine
+    engine.add_strategy(EMACross(config=strategy_config))
+
+    # Add a trading account
+    engine.add_trading_account(
+        account_id=AccountId("BACKTESTER-001"),
+        base_currency=USD,
+        starting_balance=Decimal("1000000.00"),
+    )
+
+    # Run backtest
+    engine.run()
+
+    # Print performance metrics
+    portfolio = engine.portfolio
+    performance = engine.portfolio.performance
+
+    print("\nBacktest Results:")
+    print("-" * 50)
+    print(f"Initial Capital: ${portfolio.starting_capital:,.2f}")
+    print(f"Final Capital: ${portfolio.capital:,.2f}")
+    print(f"Net PnL: ${portfolio.net_pnl:,.2f}")
+    print(f"Return: {portfolio.return_pct:.2f}%")
+    print(f"Max Drawdown: {performance.drawdown_pct_max:.2f}%")
+    print(f"Sharpe Ratio: {performance.sharpe_ratio:.2f}")
+
+
+if __name__ == "__main__":
+    print("Starting data download...")
+    # You can use either direct connection or dockerized gateway
+    # For direct connection to TWS/Gateway:
+    asyncio.run(download_data(host="127.0.0.1", port=7497))
+    
+    # For dockerized gateway (uncomment these lines and comment out the above):
+    # gateway_config = DockerizedIBGatewayConfig(
+    #     username=os.environ["TWS_USERNAME"],
+    #     password=os.environ["TWS_PASSWORD"],
+    #     trading_mode="paper",
+    # )
+    # gateway = DockerizedIBGateway(config=gateway_config)
+    # gateway.start()
+    # asyncio.run(download_data(host=gateway.host, port=gateway.port))
+    # gateway.stop()
+    
+    print("Data download complete. Starting backtest...")
+    run_backtest()
