@@ -95,7 +95,10 @@ def run_backtest() -> None:
         risk_engine=RiskEngineConfig(
             bypass=True,  # No risk checks for backtest
         ),
-        data_config=BacktestDataConfig(),
+        data_config=BacktestDataConfig(
+            catalog_path="./catalog",
+            data_cls="bars",
+        ),
     )
 
     # Initialize engine
