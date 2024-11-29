@@ -86,18 +86,12 @@ def run_backtest() -> None:
     config = BacktestEngineConfig(
         trader_id=TraderId("BACKTESTER-001"),
         logging=LoggingConfig(log_level="INFO"),
-        run_config=BacktestRunConfig(
-            venues=[],  # Will be populated by engine.add_venue()
-            data=[],    # Will be populated by engine.add_data()
-            start="2023-11-06 09:30:00",  
-            end="2023-11-06 16:30:00",
-        ),
-        risk_engine=RiskEngineConfig(
-            bypass=True,  # No risk checks for backtest
-        ),
-        data_config=BacktestDataConfig(
+        risk_engine=RiskEngineConfig(bypass=True),  # No risk checks for backtest
+        data_engine=DataEngineConfig(
             catalog_path="./catalog",
             data_cls="bars",
+            start_time="2023-11-06 09:30:00",
+            end_time="2023-11-06 16:30:00",
         ),
     )
 
