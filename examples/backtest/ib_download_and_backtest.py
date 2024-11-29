@@ -40,7 +40,7 @@ from nautilus_trader.model.enums import AccountType
 from nautilus_trader.model.enums import OmsType
 from nautilus_trader.model.identifiers import InstrumentId, Venue
 from nautilus_trader.model.objects import Money
-from nautilus_trader.model.identifiers import StrategyId
+from nautilus_trader.model.identifiers import InstrumentId, StrategyId
 from nautilus_trader.model.identifiers import TraderId
 from nautilus_trader.persistence.catalog import ParquetDataCatalog
 
@@ -54,7 +54,7 @@ async def download_data(host: str | None = None, port: int | None = None) -> Non
         exchange="SMART",
         primaryExchange="NASDAQ",
     )
-    instrument_id = "AAPL.NASDAQ"  # Pass as string, will be converted internally
+    instrument_id = InstrumentId.from_str("AAPL.NASDAQ")
 
     # Connect to IB
     client = HistoricInteractiveBrokersClient(host=host, port=port, client_id=5)
