@@ -38,7 +38,7 @@ from nautilus_trader.examples.strategies.ema_cross import EMACrossConfig
 from nautilus_trader.model.currencies import USD
 from nautilus_trader.model.enums import AccountType
 from nautilus_trader.model.enums import OmsType
-from nautilus_trader.model.identifiers import Venue
+from nautilus_trader.model.identifiers import InstrumentId, Venue
 from nautilus_trader.model.objects import Money
 from nautilus_trader.model.identifiers import StrategyId
 from nautilus_trader.model.identifiers import TraderId
@@ -54,7 +54,7 @@ async def download_data(host: str | None = None, port: int | None = None) -> Non
         exchange="SMART",
         primaryExchange="NASDAQ",
     )
-    instrument_id = "AAPL.NASDAQ"
+    instrument_id = InstrumentId.from_str("AAPL.NASDAQ")
 
     # Connect to IB
     client = HistoricInteractiveBrokersClient(host=host, port=port, client_id=5)
