@@ -1,5 +1,9 @@
 import asyncio
 from decimal import Decimal
+from nautilus_trader.adapters.interactive_brokers.config import InteractiveBrokersDataClientConfig
+from nautilus_trader.adapters.interactive_brokers.config import InteractiveBrokersExecClientConfig
+from nautilus_trader.adapters.interactive_brokers.factories import InteractiveBrokersLiveDataClientFactory
+from nautilus_trader.adapters.interactive_brokers.factories import InteractiveBrokersLiveExecClientFactory
 from nautilus_trader.model.identifiers import Symbol, Venue
 from nautilus_trader.model.instruments import Instrument
 from nautilus_trader.trading.strategy import Strategy
