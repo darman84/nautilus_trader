@@ -131,13 +131,6 @@ def run_backtest() -> None:
     # Add strategy to engine
     engine.add_strategy(EMACross(config=strategy_config))
 
-    # Add a trading account
-    engine.add_trading_account(
-        account_id=AccountId("BACKTESTER-001"),
-        base_currency=USD,
-        starting_balance=Decimal("1000000.00"),
-    )
-
     # Run backtest
     engine.run()
 
