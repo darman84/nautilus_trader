@@ -83,11 +83,14 @@ class IronCondor(Strategy):
         # Configure and subscribe to IBKR option chain
         config = InteractiveBrokersInstrumentProviderConfig(
             build_options_chain=True,
+            min_expiry_days=0,
+            max_expiry_days=60,  # Look ahead 60 days for options
             load_contracts=[
                 IBContract(
-                    secType="OPT",
+                    secType="IND",  # For index options
                     symbol=self.instrument_id.symbol.value,
                     exchange="SMART",
+                    currency="USD",
                     build_options_chain=True,
                 ),
             ],
@@ -229,18 +232,28 @@ class IronCondor(Strategy):
         return round(price / strike_interval) * strike_interval
 
     def get_call_option_id(self, strike: Decimal) -> InstrumentId:
-        """Get instrument ID for call option at given strike."""
-        # IBKR option symbol format
+        """
+        Get instrument ID for call option at given strike using IBKR format.
+        
+        The format follows IBKR's standard option symbol format:
+        {symbol}{expiry}{C|P}{strike}.{exchange}
+        """
         symbol = self.instrument_id.symbol.value
         expiry = self._get_next_monthly_expiry()
-        return InstrumentId.from_str(f"{symbol}_{expiry}_C_{strike}_SMART")
+        strike_str = f"{float(strike):08.3f}"  # Format strike price with padding
+        return InstrumentId.from_str(f"{symbol}{expiry}C{strike_str}.SMART")
 
     def get_put_option_id(self, strike: Decimal) -> InstrumentId:
-        """Get instrument ID for put option at given strike."""
-        # IBKR option symbol format
+        """
+        Get instrument ID for put option at given strike using IBKR format.
+        
+        The format follows IBKR's standard option symbol format:
+        {symbol}{expiry}{C|P}{strike}.{exchange}
+        """
         symbol = self.instrument_id.symbol.value
         expiry = self._get_next_monthly_expiry()
-        return InstrumentId.from_str(f"{symbol}_{expiry}_P_{strike}_SMART")
+        strike_str = f"{float(strike):08.3f}"  # Format strike price with padding
+        return InstrumentId.from_str(f"{symbol}{expiry}P{strike_str}.SMART")
 
     def _get_next_monthly_expiry(self) -> str:
         """Get the next monthly expiration date."""
