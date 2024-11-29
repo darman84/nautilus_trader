@@ -1,5 +1,4 @@
 from decimal import Decimal
-from nautilus_trader.adapters.interactive_brokers.config import DockerizedIBGatewayConfig
 from nautilus_trader.adapters.interactive_brokers.config import InteractiveBrokersDataClientConfig
 from nautilus_trader.adapters.interactive_brokers.config import InteractiveBrokersExecClientConfig
 from nautilus_trader.adapters.interactive_brokers.factories import InteractiveBrokersLiveDataClientFactory
@@ -11,26 +10,19 @@ from nautilus_trader.examples.strategies.iron_condor import IronCondor
 from nautilus_trader.examples.strategies.iron_condor import IronCondorConfig
 from nautilus_trader.live.node import TradingNode
 
-# Configure IB Gateway (paper trading)
-gateway_config = DockerizedIBGatewayConfig(
-    username="your_username",  # Replace with your IB username
-    password="your_password",  # Replace with your IB password
-    trading_mode="paper",      # Using paper trading for safety
-)
-
 # Configure the data client
 data_client_config = InteractiveBrokersDataClientConfig(
-    ibg_port=4002,  # Default paper trading port
+    host="127.0.0.1",  # Local TWS/Gateway
+    port=7497,         # Default TWS port
     handle_revised_bars=False,
     use_regular_trading_hours=True,
-    dockerized_gateway=gateway_config,
 )
 
 # Configure the execution client
 exec_client_config = InteractiveBrokersExecClientConfig(
-    ibg_port=4002,
+    host="127.0.0.1",  # Local TWS/Gateway
+    port=7497,         # Default TWS port
     account_id="your_account_id",  # Replace with your IB paper account ID
-    dockerized_gateway=gateway_config,
 )
 
 # Configure the trading node
