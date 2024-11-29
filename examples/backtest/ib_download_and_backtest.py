@@ -54,7 +54,7 @@ async def download_data(host: str | None = None, port: int | None = None) -> Non
         exchange="SMART",
         primaryExchange="NASDAQ",
     )
-    instrument_id = InstrumentId.from_str("AAPL.NASDAQ")
+    instrument_id = "AAPL.NASDAQ"  # Pass as string, will be converted internally
 
     # Connect to IB
     client = HistoricInteractiveBrokersClient(host=host, port=port, client_id=5)
