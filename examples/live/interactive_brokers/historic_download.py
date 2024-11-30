@@ -111,4 +111,4 @@ if __name__ == "__main__":
 
     # To connect to an existing TWS or Gateway instance without the use of automated dockerized gateway,
     # follow this format:
-    asyncio.run(main(host="127.0.0.1", port=7497))
+    asyncio.run(main(host="192.168.87.254", port=7497))

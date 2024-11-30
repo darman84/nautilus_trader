@@ -107,6 +107,7 @@ class TALibStrategy(Strategy):
             "MACD_12_26_9",
             "MACD_12_26_9_SIGNAL",
             "MACD_12_26_9_HIST",
+            "CDL3WHITESOLDIERS",
         ]
         self.indicator_manager.set_indicators(TAFunctionWrapper.from_list_of_str(indicators))
 
@@ -159,6 +160,7 @@ class TALibStrategy(Strategy):
             self.indicator_manager.value("EMA_10") > self.indicator_manager.value("EMA_20")
             and self.indicator_manager.value("EMA_10", 1) <= self.indicator_manager.value("EMA_20", 1)
             and self.indicator_manager.value("RSI_14") < 50
+            self.indicator_manager.value("CDL3WHITESOLDIERS") > 0
         ):
             self.log.info("Buy Signal: EMA_10 crossed above EMA_20 and RSI is oversold", color=LogColor.GREEN)
             self.buy()
