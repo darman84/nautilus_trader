@@ -12,7 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 # -------------------------------------------------------------------------------------------------
-
+from decimal import Decimal
 from nautilus_trader.common.enums import LogColor
 from nautilus_trader.config import StrategyConfig
 from nautilus_trader.core.correctness import PyCondition
@@ -24,6 +24,8 @@ from nautilus_trader.model.instruments import Instrument
 from nautilus_trader.trading.strategy import Strategy
 from nautilus_trader.model.enums import OrderSide
 from nautilus_trader.model.orders import MarketOrder
+from nautilus_trader.model.identifiers import InstrumentId
+from nautilus_trader.model.instruments import Instrument
 
 
 # *** THIS IS A TEST STRATEGY WITH NO ALPHA ADVANTAGE WHATSOEVER. ***
@@ -42,6 +44,8 @@ class TALibStrategyConfig(StrategyConfig, frozen=True):
     """
 
     bar_type: BarType
+    instrument_id: InstrumentId #implement later
+    trade_size: Decimal # implement later
 
 
 class TALibStrategy(Strategy):
@@ -154,7 +158,7 @@ class TALibStrategy(Strategy):
         if (
             self.indicator_manager.value("EMA_10") > self.indicator_manager.value("EMA_20")
             and self.indicator_manager.value("EMA_10", 1) <= self.indicator_manager.value("EMA_20", 1)
-            and self.indicator_manager.value("RSI_14") < 30
+            and self.indicator_manager.value("RSI_14") < 50
         ):
             self.log.info("Buy Signal: EMA_10 crossed above EMA_20 and RSI is oversold", color=LogColor.GREEN)
             self.buy()

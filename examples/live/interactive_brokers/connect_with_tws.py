@@ -64,7 +64,7 @@ config_node = TradingNodeConfig(
     logging=LoggingConfig(log_level="INFO"),
     data_clients={
         "IB": InteractiveBrokersDataClientConfig(
-            ibg_host="127.0.0.1",
+            ibg_host="192.168.87.254",
             ibg_port=7497,
             ibg_client_id=1,
             handle_revised_bars=False,
@@ -75,7 +75,7 @@ config_node = TradingNodeConfig(
     },
     exec_clients={
         "IB": InteractiveBrokersExecClientConfig(
-            ibg_host="127.0.0.1",
+            ibg_host="192.168.87.254",
             ibg_port=7497,
             ibg_client_id=1,
             account_id="DU7453754",  # This must match with the IB Gateway/TWS node is connecting to

@@ -71,7 +71,7 @@ async def download_data(host: str | None = None, port: int | None = None) -> Non
 
     bars = await client.request_bars(
         bar_specifications=["1-HOUR-LAST"],
-        start_date_time=datetime.datetime(2023, 11, 1, 9, 30),
+        start_date_time=datetime.datetime(2023, 6, 1, 9, 30),
         end_date_time=datetime.datetime(2023, 11, 6, 16, 30),
         tz_name="America/New_York",
         contracts=[contract],
@@ -122,8 +122,6 @@ def run_backtest() -> None:
         instrument_id=InstrumentId.from_str("AAPL.NASDAQ"),
         bar_type=BarType.from_str("AAPL.NASDAQ-1-HOUR-LAST-EXTERNAL"),
         trade_size=Decimal(100),
-        fast_ema_period=10,
-        slow_ema_period=20,
     )
 
     # Instantiate and add your strategy
@@ -131,7 +129,7 @@ def run_backtest() -> None:
     engine.add_strategy(strategy=strategy)
 
     time.sleep(0.1)
-    input("Press Enter to continue...")
+    #input("Press Enter to continue...")
 
     # Run the engine (from start to end of data)
     engine.run()
@@ -160,7 +158,7 @@ if __name__ == "__main__":
     print("Starting data download...")
     # You can use either direct connection or dockerized gateway
     # For direct connection to TWS/Gateway:
-    asyncio.run(download_data(host="127.0.0.1", port=7497))
+    asyncio.run(download_data(host="192.168.87.254", port=7497))
     
     # For dockerized gateway (uncomment these lines and comment out the above):
     # gateway_config = DockerizedIBGatewayConfig(

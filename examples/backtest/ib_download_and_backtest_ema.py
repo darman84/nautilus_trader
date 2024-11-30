@@ -160,7 +160,7 @@ if __name__ == "__main__":
     print("Starting data download...")
     # You can use either direct connection or dockerized gateway
     # For direct connection to TWS/Gateway:
-    asyncio.run(download_data(host="127.0.0.1", port=7497))
+    asyncio.run(download_data(host="192.168.87.254", port=7497))
     
     # For dockerized gateway (uncomment these lines and comment out the above):
     # gateway_config = DockerizedIBGatewayConfig(
