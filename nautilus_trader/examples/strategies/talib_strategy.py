@@ -46,6 +46,8 @@ class TALibStrategyConfig(StrategyConfig, frozen=True):
     bar_type: BarType
     instrument_id: InstrumentId #implement later
     trade_size: Decimal # implement later
+    
+    # trade_size=Decimal(100) #could also do this
 
 
 class TALibStrategy(Strategy):
@@ -160,7 +162,7 @@ class TALibStrategy(Strategy):
             self.indicator_manager.value("EMA_10") > self.indicator_manager.value("EMA_20")
             and self.indicator_manager.value("EMA_10", 1) <= self.indicator_manager.value("EMA_20", 1)
             and self.indicator_manager.value("RSI_14") < 50
-            self.indicator_manager.value("CDL3WHITESOLDIERS") > 0
+            and self.indicator_manager.value("CDL3WHITESOLDIERS") > 0
         ):
             self.log.info("Buy Signal: EMA_10 crossed above EMA_20 and RSI is oversold", color=LogColor.GREEN)
             self.buy()
