@@ -46,8 +46,10 @@ class TALibStrategyConfig(StrategyConfig, frozen=True):
     bar_type: BarType
     instrument_id: InstrumentId #implement later
     trade_size: Decimal # implement later
-    
     # trade_size=Decimal(100) #could also do this
+    min_beta: float = 0.5  # Add minimum beta threshold
+    max_beta: float = 2.0  # Add maximum beta threshold
+    
 
 
 class TALibStrategy(Strategy):
@@ -91,6 +93,8 @@ class TALibStrategy(Strategy):
         # Configuration
         self.instrument_id = config.bar_type.instrument_id
         self.bar_type = config.bar_type
+        self.min_beta = config.min_beta
+        self.max_beta = config.max_beta
 
         # Create the indicators for the strategy
         self.indicator_manager: TALibIndicatorManager = TALibIndicatorManager(
@@ -110,6 +114,7 @@ class TALibStrategy(Strategy):
             "MACD_12_26_9_SIGNAL",
             "MACD_12_26_9_HIST",
             "CDL3WHITESOLDIERS",
+            "BETA_5",
         ]
         self.indicator_manager.set_indicators(TAFunctionWrapper.from_list_of_str(indicators))
 
@@ -156,13 +161,25 @@ class TALibStrategy(Strategy):
         if bar.is_single_price():
             # Implies no market information for this bar
             return
+        
+        # Check beta is within acceptable range
+        current_beta = self.indicator_manager.value("BETA_5")
+        if not (self.min_beta <= current_beta <= self.max_beta):
+            self.log.info(f"Beta {current_beta} outside acceptable range [{self.min_beta}, {self.max_beta}]", 
+                        LogColor.YELLOW)
+            return
 
+            # Check if volume meets minimum threshold
+        if bar.volume < 100_000:
+            self.log.info(f"Volume {bar.volume} below minimum threshold of 100,000", LogColor.YELLOW)
+            return
+        
         # Buy Signal: EMA_10 crosses above EMA_20 and RSI is below 30
         if (
             self.indicator_manager.value("EMA_10") > self.indicator_manager.value("EMA_20")
-            and self.indicator_manager.value("EMA_10", 1) <= self.indicator_manager.value("EMA_20", 1)
-            and self.indicator_manager.value("RSI_14") < 50
-            and self.indicator_manager.value("CDL3WHITESOLDIERS") > 0
+            # and self.indicator_manager.value("EMA_10", 1) <= self.indicator_manager.value("EMA_20", 1)
+            # and self.indicator_manager.value("RSI_14") < 50
+            # and self.indicator_manager.value("CDL3WHITESOLDIERS") > 0
         ):
             self.log.info("Buy Signal: EMA_10 crossed above EMA_20 and RSI is oversold", color=LogColor.GREEN)
             self.buy()
