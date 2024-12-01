@@ -18,7 +18,7 @@ async def download_data(host: str | None = None, port: int | None = None) -> Non
         symbol="AAPL",
         exchange="SMART",
         primaryExchange="NASDAQ",
-        build_options_chain=True,
+        build_options_chain=False,
     )
     instrument_id_str = "AAPL.NASDAQ"
 
